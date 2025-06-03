@@ -1,0 +1,25 @@
+# File: houdini/vex/bragg_reflection.vfl
+
+// Bragg Reflection Shader in VEX
+// Simulates a single bounce off a Janus sphere surface at a 4-degree Bragg angle
+// Meant to be used in a VOP network or geometry shader
+
+// Inputs
+vector incoming = normalize(@N);        // Incoming X-ray vector
+vector normal = normalize(@N);          // Local surface normal
+float bragg_angle = radians(4);         // Bragg angle in radians (4 degrees)
+
+// Calculate ideal reflection vector
+vector reflection = reflect(incoming, normal);
+
+// Perturb normal slightly to simulate layer variance
+normal = normalize(mix(normal, random(@P), 0.02));
+
+// Adjust reflection based on Bragg efficiency curve (simplified cosine taper)
+float angle_diff = acos(dot(reflection, incoming));
+float efficiency = cos(angle_diff - bragg_angle);
+
+// Clamp and use efficiency as multiplier for final beam strength
+@Cd = clamp(efficiency, 0, 1) * reflection;
+@N = normal;
+
