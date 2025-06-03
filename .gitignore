@@ -1,0 +1,18 @@
+# Houdini
+*.hip~
+*.autosave
+__pycache__/
+*.vdb
+*.lock
+*.bak
+
+# Python
+*.pyc
+__pycache__/
+.env
+.DS_Store
+
+# Logs
+*.log
+*.tmp
+
