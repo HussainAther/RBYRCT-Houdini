@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "RBYRCT-Houdini"
+type: software
+authors:
+  - family-names: "Ather"
+    given-names: "Hussain"
+    email: "shussainather@gmail.com"
+repository-code: "https://github.com/HussainAther/RBYRCT-Houdini"
+abstract: >
+  RBYRCT-Houdini is a procedural simulation and data pipeline for Ray-by-Ray Computed Tomography (RBYRCT),
+  supporting layered Bragg steering, beam path export, synthetic detector hitmaps, and future integration
+  with adaptive planning, ML, and hardware control.
+keywords:
+  - computed tomography
+  - x-ray steering
+  - bragg reflection
+  - houdini
+  - procedural simulation
+license: MIT
