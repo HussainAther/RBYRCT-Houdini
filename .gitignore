@@ -1,19 +1,28 @@
-# Houdini
+# Houdini backups and caches
 *.hip~
-*.autosave
-__pycache__/
-*.vdb
-*.lock
+*.hipnc~
 *.bak
+*.autosave
+*.sim
+*.bgeo
+*.bgeo.sc
+*.vdb
+backup/
+cache/
+render/
+
+# Houdini licensing
+*.hlic
 
 # Python
-*.pyc
 __pycache__/
-.env
-.DS_Store
+*.py[cod]
+.pytest_cache/
+.venv/
+dist/
+build/
 
-# Logs
-*.log
-*.tmp
+# Generated outputs
+outputs/
 
-Syeds*
+*.DS_Store
