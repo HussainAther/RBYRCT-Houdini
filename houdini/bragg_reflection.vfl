@@ -1,31 +1,30 @@
-// File: houdini/vex/bragg_reflection.vfl
+// Bragg Reflection Simulation
+// Each layer deflects the beam by a set angle
 
-// Bragg Reflection Shader in VEX
-// Simulates beam reflection through multiple Janus layers
-// Each layer deflects the beam by 4 degrees (Bragg angle)
-// Intended for use in an Attribute Wrangle or custom VOP node
+// === Parameters ===
+// Click the 'Plug' icon to create these sliders!
+int num_layers = chi("num_layers"); 
+float step_angle = radians(chf("deflection_per_layer")); // Set this to 4 in the slider
 
-// === Inputs ===
-vector incoming = normalize(@N);        // Incident direction (use @N or custom attribute)
-vector normal = normalize(@N);          // Surface normal (can be overridden)
-float bragg_angle = radians(4);         // Bragg angle in radians (4°)
-int num_layers = chi("num_layers");     // Number of Janus layers to simulate (default: 11)
+vector total_dir = normalize(v@v); // Use velocity or a custom 'incoming' vector
+if(length(total_dir) < 0.001) total_dir = {0, -1, 0}; // Default downward if no vector exists
 
-vector total_dir = incoming;
 float total_efficiency = 1.0;
 
 for (int i = 0; i < num_layers; i++) {
-    vector layer_normal = normalize(mix(normal, random(@P + i), 0.05)); // Perturbed normal
-    vector reflection = reflect(total_dir, layer_normal);
+    // Standard Bragg deflection logic
+    // We rotate the vector around the cross product of the normal to 'bend' it
+    vector axis = normalize(cross(total_dir, @N));
+    
+    // Rotate total_dir by the step_angle around the calculated axis
+    matrix3 rot = ident();
+    rotate(rot, step_angle, axis);
+    total_dir *= rot;
 
-    float angle_diff = acos(dot(reflection, total_dir));
-    float efficiency = cos(angle_diff - bragg_angle);
-
-    total_efficiency *= clamp(efficiency, 0, 1);
-    total_dir = normalize(reflection);
+    // Simulate loss per layer
+    total_efficiency *= 0.95; 
 }
 
-// Output final direction and intensity
-@N = total_dir;
-@Cd = total_efficiency * total_dir; // Visualize strength and direction as color
-
+// === Outputs ===
+v@v = total_dir; // Update velocity
+@Cd = v@v * total_efficiency; // Color visualization
