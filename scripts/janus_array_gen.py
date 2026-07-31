@@ -1,50 +1,138 @@
-# File: scripts/janus_array_gen.py
+#!/usr/bin/env python3
+"""Generate concentric Janus-sphere layers for Houdini visualization.
 
-"""
-Janus Sphere Layer Generator
-Generates a concentric ring layout of Janus spheres for Ray-by-Ray CT simulation.
-
-Each layer consists of spheres positioned in a circle around the origin.
-Layer deflection increases by 4 degrees per layer (Bragg reflection model).
-Outputs to CSV for use in Houdini or other render/simulation pipelines.
+This module produces deterministic geometry and metadata. The per-layer steering
+angle is an idealized visualization parameter; it is not a validated Bragg-law
+calculation.
 """
 
-import numpy as np
+from __future__ import annotations
+
+import argparse
 import csv
-import os
+import math
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Iterable, Sequence
 
-# Parameters
-num_layers = 11               # Number of layers stacked vertically
-spheres_per_layer = 24        # Spheres arranged per circular ring
-sphere_radius = 1.0           # Radius of each sphere
-layer_spacing = 2.5           # Distance between each layer (Z-axis)
-circle_radius = 20.0          # Radius of each circular ring
 
-# Output file
-output_file = "janus_layers_concentric.csv"
+@dataclass(frozen=True)
+class JanusSphere:
+    """One sphere location and its simulation metadata."""
 
-rows = []
+    sphere_id: int
+    layer_index: int
+    ring_index: int
+    x: float
+    y: float
+    z: float
+    sphere_radius: float
+    ring_radius: float
+    azimuth_deg: float
+    steering_angle_deg: float
 
-# Generate point positions and metadata for each layer
-for i in range(num_layers):
-    z = i * layer_spacing
-    angle_step = 2 * np.pi / spheres_per_layer
-    layer_angle = i * 4       # Total deflection angle in degrees
 
-    for j in range(spheres_per_layer):
-        theta = j * angle_step
-        x = circle_radius * np.cos(theta)
-        y = circle_radius * np.sin(theta)
-        rows.append([x, y, z, layer_angle])
+FIELDNAMES = list(JanusSphere.__dataclass_fields__)
 
-# Save to CSV
-os.makedirs("data", exist_ok=True)
-csv_path = os.path.join("data", output_file)
 
-with open(csv_path, "w", newline="") as f:
-    writer = csv.writer(f)
-    writer.writerow(["x", "y", "z", "layer_angle_deg"])
-    writer.writerows(rows)
+def generate_array(
+    *,
+    num_layers: int = 11,
+    spheres_per_layer: int = 24,
+    sphere_radius: float = 1.0,
+    layer_spacing: float = 2.5,
+    ring_radius: float = 20.0,
+    steering_per_layer_deg: float = 4.0,
+) -> list[JanusSphere]:
+    """Return a deterministic concentric array.
 
-print(f"✅ Concentric Janus layer array written to: {csv_path}")
+    Raises:
+        ValueError: If a count is non-positive or a geometric value is invalid.
+    """
+    if num_layers <= 0:
+        raise ValueError("num_layers must be positive")
+    if spheres_per_layer <= 0:
+        raise ValueError("spheres_per_layer must be positive")
+    if sphere_radius <= 0:
+        raise ValueError("sphere_radius must be positive")
+    if layer_spacing < 0:
+        raise ValueError("layer_spacing cannot be negative")
+    if ring_radius < 0:
+        raise ValueError("ring_radius cannot be negative")
 
+    rows: list[JanusSphere] = []
+    sphere_id = 0
+    for layer_index in range(num_layers):
+        z = layer_index * layer_spacing
+        steering_angle = layer_index * steering_per_layer_deg
+        for ring_index in range(spheres_per_layer):
+            azimuth_rad = 2.0 * math.pi * ring_index / spheres_per_layer
+            rows.append(
+                JanusSphere(
+                    sphere_id=sphere_id,
+                    layer_index=layer_index,
+                    ring_index=ring_index,
+                    x=ring_radius * math.cos(azimuth_rad),
+                    y=ring_radius * math.sin(azimuth_rad),
+                    z=z,
+                    sphere_radius=sphere_radius,
+                    ring_radius=ring_radius,
+                    azimuth_deg=math.degrees(azimuth_rad),
+                    steering_angle_deg=steering_angle,
+                )
+            )
+            sphere_id += 1
+    return rows
+
+
+def write_csv(rows: Iterable[JanusSphere], output_path: str | Path) -> Path:
+    """Write sphere records to CSV and return the resolved output path."""
+    path = Path(output_path).expanduser()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(asdict(row))
+    return path.resolve()
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Generate concentric Janus-sphere layers for Houdini."
+    )
+    parser.add_argument("--layers", type=int, default=11)
+    parser.add_argument("--spheres-per-layer", type=int, default=24)
+    parser.add_argument("--sphere-radius", type=float, default=1.0)
+    parser.add_argument("--layer-spacing", type=float, default=2.5)
+    parser.add_argument("--ring-radius", type=float, default=20.0)
+    parser.add_argument("--steering-per-layer-deg", type=float, default=4.0)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("data/janus_layers_concentric.csv"),
+    )
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    try:
+        rows = generate_array(
+            num_layers=args.layers,
+            spheres_per_layer=args.spheres_per_layer,
+            sphere_radius=args.sphere_radius,
+            layer_spacing=args.layer_spacing,
+            ring_radius=args.ring_radius,
+            steering_per_layer_deg=args.steering_per_layer_deg,
+        )
+        output = write_csv(rows, args.output)
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"Error: {exc}") from exc
+
+    print(f"Wrote {len(rows)} Janus-sphere records to {output}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

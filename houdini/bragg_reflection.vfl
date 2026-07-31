@@ -1,30 +1,43 @@
-// Bragg Reflection Simulation
-// Each layer deflects the beam by a set angle
+// Idealized layered steering visualization for RBYRCT-Houdini.
+// This is not a validated Bragg-law solver.
 
-// === Parameters ===
-// Click the 'Plug' icon to create these sliders!
-int num_layers = chi("num_layers"); 
-float step_angle = radians(chf("deflection_per_layer")); // Set this to 4 in the slider
+int num_layers = max(chi("num_layers"), 0);
+float step_angle = radians(chf("deflection_per_layer"));
+float efficiency_per_layer = clamp(chf("efficiency_per_layer"), 0.0, 1.0);
 
-vector total_dir = normalize(v@v); // Use velocity or a custom 'incoming' vector
-if(length(total_dir) < 0.001) total_dir = {0, -1, 0}; // Default downward if no vector exists
+vector total_dir = v@v;
+if (length2(total_dir) < 1e-12)
+    total_dir = set(0.0, -1.0, 0.0);
+total_dir = normalize(total_dir);
+
+vector normal = @N;
+if (length2(normal) < 1e-12)
+    normal = set(0.0, 0.0, 1.0);
+normal = normalize(normal);
 
 float total_efficiency = 1.0;
 
-for (int i = 0; i < num_layers; i++) {
-    // Standard Bragg deflection logic
-    // We rotate the vector around the cross product of the normal to 'bend' it
-    vector axis = normalize(cross(total_dir, @N));
-    
-    // Rotate total_dir by the step_angle around the calculated axis
-    matrix3 rot = ident();
-    rotate(rot, step_angle, axis);
-    total_dir *= rot;
+for (int i = 0; i < num_layers; i++)
+{
+    vector axis = cross(total_dir, normal);
 
-    // Simulate loss per layer
-    total_efficiency *= 0.95; 
+    // Parallel or anti-parallel vectors have no unique cross-product axis.
+    // Choose a deterministic perpendicular fallback so the rotation remains valid.
+    if (length2(axis) < 1e-12)
+    {
+        vector reference = abs(total_dir.y) < 0.9
+            ? set(0.0, 1.0, 0.0)
+            : set(1.0, 0.0, 0.0);
+        axis = cross(total_dir, reference);
+    }
+    axis = normalize(axis);
+
+    matrix3 rotation = ident();
+    rotate(rotation, step_angle, axis);
+    total_dir = normalize(total_dir * rotation);
+    total_efficiency *= efficiency_per_layer;
 }
 
-// === Outputs ===
-v@v = total_dir; // Update velocity
-@Cd = v@v * total_efficiency; // Color visualization
+v@v = total_dir;
+f@total_efficiency = total_efficiency;
+v@Cd = clamp(abs(total_dir) * total_efficiency, 0.0, 1.0);

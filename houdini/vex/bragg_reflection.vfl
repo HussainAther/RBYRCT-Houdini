@@ -1,25 +1,43 @@
-# File: houdini/vex/bragg_reflection.vfl
+// Idealized layered steering visualization for RBYRCT-Houdini.
+// This is not a validated Bragg-law solver.
 
-// Bragg Reflection Shader in VEX
-// Simulates a single bounce off a Janus sphere surface at a 4-degree Bragg angle
-// Meant to be used in a VOP network or geometry shader
+int num_layers = max(chi("num_layers"), 0);
+float step_angle = radians(chf("deflection_per_layer"));
+float efficiency_per_layer = clamp(chf("efficiency_per_layer"), 0.0, 1.0);
 
-// Inputs
-vector incoming = normalize(@N);        // Incoming X-ray vector
-vector normal = normalize(@N);          // Local surface normal
-float bragg_angle = radians(4);         // Bragg angle in radians (4 degrees)
+vector total_dir = v@v;
+if (length2(total_dir) < 1e-12)
+    total_dir = set(0.0, -1.0, 0.0);
+total_dir = normalize(total_dir);
 
-// Calculate ideal reflection vector
-vector reflection = reflect(incoming, normal);
+vector normal = @N;
+if (length2(normal) < 1e-12)
+    normal = set(0.0, 0.0, 1.0);
+normal = normalize(normal);
 
-// Perturb normal slightly to simulate layer variance
-normal = normalize(mix(normal, random(@P), 0.02));
+float total_efficiency = 1.0;
 
-// Adjust reflection based on Bragg efficiency curve (simplified cosine taper)
-float angle_diff = acos(dot(reflection, incoming));
-float efficiency = cos(angle_diff - bragg_angle);
+for (int i = 0; i < num_layers; i++)
+{
+    vector axis = cross(total_dir, normal);
 
-// Clamp and use efficiency as multiplier for final beam strength
-@Cd = clamp(efficiency, 0, 1) * reflection;
-@N = normal;
+    // Parallel or anti-parallel vectors have no unique cross-product axis.
+    // Choose a deterministic perpendicular fallback so the rotation remains valid.
+    if (length2(axis) < 1e-12)
+    {
+        vector reference = abs(total_dir.y) < 0.9
+            ? set(0.0, 1.0, 0.0)
+            : set(1.0, 0.0, 0.0);
+        axis = cross(total_dir, reference);
+    }
+    axis = normalize(axis);
 
+    matrix3 rotation = ident();
+    rotate(rotation, step_angle, axis);
+    total_dir = normalize(total_dir * rotation);
+    total_efficiency *= efficiency_per_layer;
+}
+
+v@v = total_dir;
+f@total_efficiency = total_efficiency;
+v@Cd = clamp(abs(total_dir) * total_efficiency, 0.0, 1.0);
