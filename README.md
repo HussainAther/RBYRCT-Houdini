@@ -101,3 +101,48 @@ The next major module should model explicit rays, geometric intersections, steer
 ## License
 
 MIT License.
+
+## Phase 1 ray engine
+
+The repository now includes a dependency-free, explicitly idealized ray pipeline:
+
+```text
+source -> emit rays -> intersect layers -> steer -> attenuate -> detector -> record
+```
+
+Core implementation:
+
+```text
+physics/ray_engine.py
+scripts/run_ray_engine.py
+```
+
+Run the default 5 x 5 beam through five steering planes:
+
+```bash
+python3 scripts/run_ray_engine.py
+```
+
+Outputs are written to `data/ray_engine/`:
+
+- `rays.csv` — one summary row per emitted ray
+- `ray_events.csv` — emitted, layer-enter, layer-exit, termination, and detector events
+- `detector_hits.csv` — detector coordinates, active-area status, and pixel indices
+
+Example with custom geometry:
+
+```bash
+python3 scripts/run_ray_engine.py \
+  --rows 11 \
+  --columns 11 \
+  --layers 8 \
+  --layer-spacing 2.0 \
+  --steering-per-layer-deg 0.5 \
+  --transmission-per-layer 0.97 \
+  --detector-z 24.0 \
+  --output-dir data/custom_ray_run
+```
+
+### Model boundary
+
+This first ray engine performs exact geometric line-plane intersections and vector rotations, but its steering angle and per-layer transmission are configurable approximations. It does **not** yet calculate crystal orientation, Bragg acceptance, energy-dependent material attenuation, stochastic scattering, or dose. Those should be introduced as replaceable physics models and validated independently.
