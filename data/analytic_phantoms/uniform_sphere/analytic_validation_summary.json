@@ -1,0 +1,10 @@
+{
+  "scenario": "uniform_sphere",
+  "ray_count": 9,
+  "passed_count": 9,
+  "failed_count": 0,
+  "max_path_length_abs_error": 8.881784197001252e-16,
+  "max_intensity_abs_error": 5.551115123125783e-17,
+  "tolerance": 1e-10,
+  "passed": true
+}

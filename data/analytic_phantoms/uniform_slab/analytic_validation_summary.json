@@ -1,0 +1,10 @@
+{
+  "scenario": "uniform_slab",
+  "ray_count": 9,
+  "passed_count": 9,
+  "failed_count": 0,
+  "max_path_length_abs_error": 0.0,
+  "max_intensity_abs_error": 0.0,
+  "tolerance": 1e-10,
+  "passed": true
+}

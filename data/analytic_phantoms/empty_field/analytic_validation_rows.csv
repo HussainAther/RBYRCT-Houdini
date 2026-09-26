@@ -1,0 +1,10 @@
+ray_id,expected_path_length,simulated_path_length,path_length_abs_error,expected_intensity,simulated_intensity,intensity_abs_error,passed
+0,0.0,0.0,0.0,1.0,1.0,0.0,True
+1,0.0,0.0,0.0,1.0,1.0,0.0,True
+2,0.0,0.0,0.0,1.0,1.0,0.0,True
+3,0.0,0.0,0.0,1.0,1.0,0.0,True
+4,0.0,0.0,0.0,1.0,1.0,0.0,True
+5,0.0,0.0,0.0,1.0,1.0,0.0,True
+6,0.0,0.0,0.0,1.0,1.0,0.0,True
+7,0.0,0.0,0.0,1.0,1.0,0.0,True
+8,0.0,0.0,0.0,1.0,1.0,0.0,True

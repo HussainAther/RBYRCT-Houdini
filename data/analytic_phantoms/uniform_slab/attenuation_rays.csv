@@ -1,0 +1,10 @@
+ray_id,initial_intensity,final_intensity,total_path_length,total_optical_depth,interaction_count,terminated_reason
+0,1.0,0.6187833918061408,4.0,0.48,1,detector_hit
+1,1.0,0.6187833918061408,4.0,0.48,1,detector_hit
+2,1.0,0.6187833918061408,4.0,0.48,1,detector_hit
+3,1.0,0.6187833918061408,4.0,0.48,1,detector_hit
+4,1.0,0.6187833918061408,4.0,0.48,1,detector_hit
+5,1.0,0.6187833918061408,4.0,0.48,1,detector_hit
+6,1.0,0.6187833918061408,4.0,0.48,1,detector_hit
+7,1.0,0.6187833918061408,4.0,0.48,1,detector_hit
+8,1.0,0.6187833918061408,4.0,0.48,1,detector_hit

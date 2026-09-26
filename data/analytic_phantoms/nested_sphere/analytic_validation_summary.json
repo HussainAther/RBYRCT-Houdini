@@ -1,0 +1,10 @@
+{
+  "scenario": "nested_sphere",
+  "ray_count": 9,
+  "passed_count": 9,
+  "failed_count": 0,
+  "max_path_length_abs_error": 1.7763568394002505e-15,
+  "max_intensity_abs_error": 1.1102230246251565e-16,
+  "tolerance": 1e-10,
+  "passed": true
+}

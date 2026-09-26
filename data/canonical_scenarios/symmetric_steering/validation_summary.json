@@ -1,0 +1,15 @@
+{
+  "detector_hits": 9,
+  "detector_misses": 0,
+  "error_count": 0,
+  "issue_count": 0,
+  "max_direction_norm_error": 2.220446049250313e-16,
+  "max_distance_continuity_error": 3.552713678800501e-15,
+  "passed": true,
+  "point_count": 90,
+  "ray_count": 9,
+  "segment_count": 81,
+  "terminated_rays": 0,
+  "warning_count": 0,
+  "zero_length_transition_count": 36
+}
